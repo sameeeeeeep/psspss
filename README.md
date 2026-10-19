@@ -34,4 +34,4 @@ psspss.dev with a QR code. Scan it with your phone, add it to your home screen, 
 - **When your Mac sleeps**, cats fall back to a small free model and say they're away.
 - **psspss.dev** stores your cats' chats, memory and gifts, and sends notifications.
 
-The source for this plugin is the bundled `bin/` files; they're built from the psspss app repo.
+See [SECURITY.md](SECURITY.md) for what runs where and what cats can and can't do.
