@@ -3764,7 +3764,8 @@ import { spawn, execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, existsSync, mkdirSync } from "node:fs";
 import { homedir, hostname as hostname3 } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { query, createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
 
 // node_modules/agents/dist/utils.js
@@ -19165,6 +19166,7 @@ var CONNECTORS = (process.env.CLAW_CONNECTORS || file2.connectors || "Gmail,Goog
 var CLAUDE = process.env.CLAW_CLAUDE_BIN || file2.claude || join(homedir(), ".local/bin/claude");
 var IDLE_MS = 30 * 6e4;
 var SWITCHBOARD = process.env.CLAW_SWITCHBOARD || file2.switchboard || join(homedir(), "Documents/Projects/relay/packages/sidekick/dist/backends");
+var REFS = join(dirname(fileURLToPath(import.meta.url)), "refs-server.mjs");
 var LOCAL_URL = process.env.CLAW_LOCAL_URL || file2.localUrl || "http://127.0.0.1:11434/v1";
 var WORKDIR = join(homedir(), file2.hid ? ".psspss" : ".claw", "workspace");
 mkdirSync(WORKDIR, { recursive: true });
@@ -19204,6 +19206,8 @@ var BUILTINS = [
 var pending = /* @__PURE__ */ new Map();
 function classify(name) {
   if (name.startsWith("mcp__claw__")) return { kind: "allow" };
+  if (name.startsWith("mcp__refs__"))
+    return /references_(suggest|get|pick)$/.test(name) ? { kind: "allow" } : { kind: "ask" };
   const m = name.match(/^mcp__claude_ai_(.+?)__(.+)$/);
   if (!m) return { kind: "deny", why: "Cats can only use your connected accounts." };
   if (!CONNECTORS.includes(m[1])) return { kind: "deny", why: `${m[1]} isn't enabled for cats.` };
@@ -19320,7 +19324,10 @@ var Cat = class {
         systemPrompt: system,
         ...resume ? { resume } : {},
         includePartialMessages: true,
-        mcpServers: { claw: this.clawTools() },
+        mcpServers: {
+          claw: this.clawTools(),
+          ...existsSync(REFS) ? { refs: { type: "stdio", command: process.execPath, args: [REFS] } } : {}
+        },
         permissionMode: "default",
         // No built-in tools at all (allowlist by construction); the denylist and
         // canUseTool below are second and third layers.

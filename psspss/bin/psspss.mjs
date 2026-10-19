@@ -808,6 +808,7 @@ async function setup() {
   writeFileSync(CFG, JSON.stringify(cfg, null, 2));
   chmodSync(CFG, 384);
   copyFileSync(join(HERE, "runner.mjs"), RUNNER);
+  if (existsSync(join(HERE, "refs-server.mjs"))) copyFileSync(join(HERE, "refs-server.mjs"), join(DIR, "refs-server.mjs"));
   writeFileSync(join(DIR, "package.json"), JSON.stringify({ name: "psspss-runner", private: true, type: "module", dependencies: { "@anthropic-ai/claude-agent-sdk": SDK_VERSION } }, null, 2));
   if (!existsSync(join(DIR, "node_modules/@anthropic-ai/claude-agent-sdk/package.json")) || process.argv.includes("--update")) {
     say("\u2026 installing the Claude Agent SDK (one time)");
