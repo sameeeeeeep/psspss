@@ -19435,11 +19435,15 @@ ${job.history.map((t) => `${t.role}: ${t.text}`).join("\n")}
 </history>
 
 ` : "";
-        const content = `${history}<context>
+        const text = `${history}<context>
 ${job.context}
 </context>
 
 ${job.message}`;
+        const files = (job.attachments ?? []).map(
+          (a) => a.mime === "application/pdf" ? { type: "document", title: a.name, source: { type: "base64", media_type: a.mime, data: a.data } } : { type: "image", source: { type: "base64", media_type: a.mime, data: a.data } }
+        );
+        const content = files.length ? [...files, { type: "text", text }] : text;
         this.push({ type: "user", parent_tool_use_id: null, message: { role: "user", content } });
         log(`[${this.id}] \u2192 ${job.message.slice(0, 80)}`);
       })
@@ -19536,6 +19540,7 @@ var CLAW_TOOLS = [
     }
   }
 ];
+var CAPS = ["attachments"];
 var turn = (job) => `<context>
 ${job.context}
 </context>
@@ -19613,13 +19618,13 @@ function connect() {
     await loadBrains();
     const after = await brains();
     if (JSON.stringify(after) !== before) {
-      client.send(JSON.stringify({ type: "hello", brains: after, connectors: connected }));
+      client.send(JSON.stringify({ type: "hello", brains: after, connectors: connected, caps: CAPS }));
       log(`brains now: ${after.map((x) => x.label).join(", ")}`);
     }
   }, 10 * 6e4).unref();
   client.addEventListener("open", async () => {
     const b = await brains();
-    client.send(JSON.stringify({ type: "hello", brains: b, connectors: connected }));
+    client.send(JSON.stringify({ type: "hello", brains: b, connectors: connected, caps: CAPS }));
     log(`connected to ${HOST} \xB7 brains: ${b.map((x) => x.label).join(", ")} \xB7 connectors: ${CONNECTORS.join(", ")}`);
   });
   client.addEventListener("close", () => log("disconnected; retrying\u2026"));
