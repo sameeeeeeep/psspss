@@ -7,7 +7,7 @@
       "name": "psspss",
       "source": "./psspss",
       "description": "Your Claude, on your phone, as cats. Sets up a runner on your Mac and pairs your phone with a QR code.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "homepage": "https://psspss.dev"
     }
   ]

@@ -787,6 +787,19 @@ async function waitOnline(secs = 45) {
   }
   return false;
 }
+function watchTools() {
+  const have = (bin) => ["/opt/homebrew/bin", "/usr/local/bin"].some((d) => existsSync(join(d, bin)));
+  const missing = ["yt-dlp", "ffmpeg"].filter((b) => !have(b));
+  if (!missing.length) return;
+  const brew = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"].find(existsSync);
+  if (platform() !== "darwin" || !brew) {
+    say(`! To let cats watch shared posts and reels, install ${missing.join(" + ")} (e.g. brew install ${missing.join(" ")})`);
+    return;
+  }
+  say(`\u2026 installing ${missing.join(" + ")} so cats can watch posts and reels you share (one time)`);
+  const r = spawnSync(brew, ["install", ...missing], { stdio: "ignore", timeout: 15 * 6e4 });
+  say(r.status === 0 ? `\u2713 Installed ${missing.join(" + ")}` : `! Couldn't install ${missing.join(" + ")}; run: brew install ${missing.join(" ")}`);
+}
 async function setup() {
   const major = Number(process.versions.node.split(".")[0]);
   if (major < 18) fail(`Node ${process.versions.node} is too old; psspss needs Node 18+.`);
@@ -816,6 +829,7 @@ async function setup() {
     const r = spawnSync(existsSync(npm) ? npm : "npm", ["install", "--silent", "--no-audit", "--no-fund"], { cwd: DIR, encoding: "utf8" });
     if (r.status !== 0) fail(`npm install failed: ${(r.stderr || r.stdout || "").slice(0, 300)}`);
   }
+  watchTools();
   writeFileSync(LOG, "");
   launchd(cfg);
   const up = platform() === "darwin" ? await waitOnline() : false;
