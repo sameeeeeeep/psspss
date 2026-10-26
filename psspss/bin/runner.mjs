@@ -19183,6 +19183,9 @@ async function watchPost(url2) {
       "--no-warnings",
       "--quiet",
       "--ignore-config",
+      // Only the site extractors: never the generic one, which would follow a redirect anywhere (even your LAN).
+      "--use-extractors",
+      "instagram.*,tiktok.*,youtube.*,youtu.*,twitter.*,vimeo.*,threads.*",
       "--max-filesize",
       "150M",
       "--match-filters",
@@ -19205,6 +19208,12 @@ async function watchPost(url2) {
       return text(`Couldn't open that post: ${why.replace(/^ERROR:\s*/, "").slice(0, 200)}`);
     }
     const info = JSON.parse(readFileSync(join(dir, infoFile), "utf8"));
+    try {
+      const final = new URL(info.webpage_url || u.href);
+      if (final.protocol !== "https:" || !HOSTS.test(final.hostname)) return text("That link led somewhere I don't watch.");
+    } catch {
+      return text("That link led somewhere I don't watch.");
+    }
     const video = files.find((f) => /\.(mp4|webm|mkv|mov)$/.test(f));
     const thumb = files.find((f) => /\.jpe?g$/.test(f));
     const images = [];
@@ -19218,7 +19227,7 @@ async function watchPost(url2) {
     if (!images.length && thumb) images.push(readFileSync(join(dir, thumb)));
     const meta3 = [
       `Post: ${info.webpage_url || u.href}`,
-      info.uploader || info.channel ? `By: ${info.uploader || info.channel}${info.uploader_id ? ` (@${info.uploader_id})` : ""}` : "",
+      info.uploader || info.channel ? `By: ${info.uploader || info.channel}${info.uploader_id ? ` (@${String(info.uploader_id).replace(/^@/, "")})` : ""}` : "",
       info.duration ? `Length: ${Math.round(info.duration)}s` : "",
       info.upload_date ? `Posted: ${info.upload_date.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")}` : "",
       info.view_count != null ? `Views: ${info.view_count}` : "",
